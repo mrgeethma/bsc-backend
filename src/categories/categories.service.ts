@@ -1,3 +1,4 @@
+//this. refers to the current instance of CategoriesService class.
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,21 +8,21 @@ import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 @Injectable()
 export class CategoriesService {
   constructor(
-    @InjectRepository(Category)
-    private categoriesRepository: Repository<Category>,
+    @InjectRepository(Category) // Injecting the Category repository to interact with the database
+    private categoriesRepository: Repository<Category>, // Repository for Category entity to perform database operations
   ) {}
 
-  private generateSlug(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
+  private generateSlug(name: string): string { // Utility method to generate URL-friendly slugs from category names
+    return name // here we generate a slug by converting the name to lowercase, replacing spaces with hyphens, and removing special characters
+      .toLowerCase() 
+      .replace(/[^a-z0-9\s-]/g, '') // remove invalid characters(anything that's not a-z, 0-9, space, or hyphen. The slashes / / are just wrappers that tell JavaScript: “The thing inside is a regex, not a string.” and the g at the end means "global", so it replaces all occurrences, not just the first one)
+      .replace(/\s+/g, '-') // replace spaces with hyphens(one or more spaces). \s means space and + means "one or more"
+      .replace(/-+/g, '-') // collapse multiple hyphens into a single hyphen 
+      .trim(); // remove leading and trailing hyphens
   }
 
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
-    const slug = this.generateSlug(createCategoryDto.name);
+    const slug = this.generateSlug(createCategoryDto.name); // Generate slug from category name. this.generateSlug is a method defined above and here this. refers to the current instance of CategoriesService class.
     
     // Check if slug already exists.
     const existingCategory = await this.categoriesRepository.findOne({

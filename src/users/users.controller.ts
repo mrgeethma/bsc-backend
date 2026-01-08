@@ -8,10 +8,10 @@ import { UserRole } from '../entities';
 import { ResponseUtil } from '../common/utils/response.util';
 import type { ApiResponse as ApiResponseType } from '../common/utils/response.util';
 
-@ApiTags('Users')
+@ApiTags('Users') // what this does: it groups the endpoints in Swagger UI under "Users"
 @Controller('users')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+@UseGuards(JwtAuthGuard) // protects all routes in this controller with JWT authentication. Only authenticated users can access these endpoints and it checks for a valid JWT token in the request headers to verify the user's identity before granting access to the controller's methods.
+@ApiBearerAuth() // indicates that this controller uses bearer token authentication (JWT) in the Swagger documentation. it adds a field in the Swagger UI where users can input their JWT token to authenticate requests to the endpoints defined in this controller.
 export class UsersController {
   constructor(private usersService: UsersService) {}
 

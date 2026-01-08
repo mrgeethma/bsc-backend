@@ -1,73 +1,54 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import helmet from 'helmet';
-import express from 'express';
-import { ExpressAdapter } from '@nestjs/platform-express';
-import * as bodyParser from 'body-parser';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'; // Swagger for API documentation and DocumentBuilder to configure it
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter'; // Global exception filter to handle all unhandled exceptions
+import helmet from 'helmet'; // Helmet helps secure Express apps by setting various HTTP headers and is a security best practice
+import express from 'express'; // Import Express framework for creating the server
+import { ExpressAdapter } from '@nestjs/platform-express'; // Adapter to use Express with NestJS and this allows us to leverage Express middleware and features
+import * as bodyParser from 'body-parser'; // Body parsing middleware to handle JSON and URL-encoded payloads
 
 async function bootstrap() {
-  // Create Express app instance and disable 'X-Powered-By' header
-  const expressApp = express();
-  expressApp.disable('x-powered-by');
 
-  // Create Nest app using Express adapter
-  const app = await NestFactory.create(
-    AppModule,
-    new ExpressAdapter(expressApp),
-  );
+  const expressApp = express(); // Create an Express application instance
+  expressApp.disable('x-powered-by'); // disable 'X-Powered-By' header. Security best practice. what does this do? It hides the fact that the server is running Express, reducing information exposure to potential attackers.
 
-  // Body parsing middleware
-  expressApp.use(bodyParser.json({ limit: '10mb' }));
-  expressApp.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
-
-  // Global route prefix
+  const app = await NestFactory.create(AppModule, // Create NestJS application instance
+    new ExpressAdapter(expressApp) 
+  ); // Create Nest app using Express adapter. why use Express adapter? To leverage Express middleware and features.
+  
+  expressApp.use(bodyParser.json({ limit: '10mb' }));  // Body parsing middleware. Increase payload size limit.
+  expressApp.use(bodyParser.urlencoded({ extended: true, limit: '10mb' })); // Body parsing middleware for URL-encoded data
   app.setGlobalPrefix('api/v1');
-
-  // Use Helmet for security headers
-  app.use(
+  app.use(  // Use Helmet for security headers. what is Helmet? Helmet helps secure Express apps by setting various HTTP headers like HSTS, XSS Protection, etc.
     helmet({
-      contentSecurityPolicy: false, // Configure CSP as needed
+      contentSecurityPolicy: false, // Configure CSP(content Security Policy) as needed. Disable for simplicity, but should be enabled in production with proper settings.
     }),
   );
 
-  // Enable CORS
-  app.enableCors({
+  app.enableCors({  // Enable CORS
     origin: '*', // Configure appropriately for production
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: '*',
-    credentials: true,
+    allowedHeaders: '*', // Allow all headers for CORS like Authorization. Adjust as needed for security.
+    credentials: true, // Allow credentials in CORS requests
   });
 
-  // Enable global validation pipe
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
+  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true}));  // Enable global validation pipe. here: transform - auto transform payloads to DTO instances; whitelist - strip non-whitelisted properties; forbidNonWhitelisted - throw error on non-whitelisted properties. in simply whitelisted properties mean only properties defined in the DTO will be accepted.
+  app.useGlobalFilters(new AllExceptionsFilter());  // Use global exception filter. this filter will catch all unhandled exceptions and format the response.
 
-  // Use global exception filter
-  app.useGlobalFilters(new AllExceptionsFilter());
-
-  // Setup Swagger API docs
-  const config = new DocumentBuilder()
+  const config = new DocumentBuilder()  // Setup Swagger API docs. what is Swagger? Swagger (OpenAPI) is a framework for API documentation and testing. in here we are configuring the Swagger document with title, description, version, and security schemes.
     .setTitle('BSC Organics API')
-    .setDescription('E-commerce API for spices and organic products')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+    .setDescription('E-commerce API for spices and organic products') 
+    .setVersion('1.0') // Set API version
+    .addBearerAuth() // Add Bearer auth to Swagger
+    .build(); // Build Swagger document configuration
+  const document = SwaggerModule.createDocument(app, config); // Create Swagger document
+  SwaggerModule.setup('api', app, document); // Setup Swagger module at /api endpoint
 
-  // Start listening on configured port
-  const port = process.env.PORT || 3001;
-  await app.listen(port);
+  const port = process.env.PORT || 3001
+  await app.listen(port); //Start listening on configured port which means the server is now running and ready to accept requests on the specified port.
   
-  console.log(`🚀 BSC Organics API is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger documentation available at: http://localhost:${port}/api`);
+    console.log(`🚀 BSC Organics API is running on: http://localhost:${port}`);
+    console.log(`📚 Swagger documentation available at: http://localhost:${port}/api`);
 }
-bootstrap();
+bootstrap(); // Bootstrap the application

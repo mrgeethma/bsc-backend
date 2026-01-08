@@ -23,7 +23,7 @@ export class CategoriesService {
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
     const slug = this.generateSlug(createCategoryDto.name);
     
-    // Check if slug already exists
+    // Check if slug already exists.
     const existingCategory = await this.categoriesRepository.findOne({
       where: { slug },
     });

@@ -27,12 +27,12 @@ export class CategoriesController {
   }
 
   @Get('all')
-  @Public()
+  @Public() // Marking this route as public which means it can be accessed without authentication
   @ApiOperation({ summary: 'Get all active categories' })
   @ApiResponse({ status: 200, description: 'Categories retrieved successfully' })
-  async findAll(): Promise<ApiResponseType<any[]>> {
-    const categories = await this.categoriesService.findAll();
-    return ResponseUtil.ok(categories, 'Categories retrieved successfully');
+  async findAll(): Promise<ApiResponseType<any[]>> { // what is promise<ApiResponseType<any[]>> does is it indicates that this method returns a Promise that resolves to an ApiResponseType containing an array of any type which means the response will include a list of categories
+    const categories = await this.categoriesService.findAll(); // Fetching all active categories from the service and storing them in the categories variable which is a list(array) of category objects
+    return ResponseUtil.ok(categories, 'Categories retrieved successfully'); // Returning a standardized success response with the list of categories and a success message
   }
 
   @Get('admin')
@@ -50,7 +50,7 @@ export class CategoriesController {
   @Public()
   @ApiOperation({ summary: 'Get category by ID' })
   @ApiResponse({ status: 200, description: 'Category retrieved successfully' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponseType<any>> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponseType<any>> { // what is ParseUUIDPipe does is it validates and transforms the 'id' parameter to ensure it is a VALID UUID FORMAT which means if the 'id' is not a valid UUID, an error will be thrown before reaching the service layer and stop further processing
     const category = await this.categoriesService.findOne(id);
     return ResponseUtil.ok(category, 'Category retrieved successfully');
   }
@@ -61,10 +61,7 @@ export class CategoriesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update category (Admin only)' })
   @ApiResponse({ status: 200, description: 'Category updated successfully' })
-  async update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateCategoryDto: UpdateCategoryDto,
-  ): Promise<ApiResponseType<any>> {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateCategoryDto: UpdateCategoryDto,): Promise<ApiResponseType<any>> {
     const category = await this.categoriesService.update(id, updateCategoryDto);
     return ResponseUtil.ok(category, 'Category updated successfully');
   }

@@ -13,15 +13,15 @@ import type { ApiResponse as ApiResponseType } from '../common/utils/response.ut
 @ApiTags('Categories')
 @Controller('categories')
 export class CategoriesController {
-  constructor(private readonly categoriesService: CategoriesService) {}
+  constructor(private readonly categoriesService: CategoriesService) {} // Injecting CategoriesService to handle business logic related to categories
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a new category (Admin only)' })
-  @ApiResponse({ status: 201, description: 'Category created successfully' })
-  async create(@Body() createCategoryDto: CreateCategoryDto): Promise<ApiResponseType<any>> {
+  @UseGuards(JwtAuthGuard, RolesGuard) // Protecting route with JWT and role-based guards which means only authenticated users with appropriate roles can access this endpoint
+  @Roles(UserRole.ADMIN) // Restricting access to users with ADMIN role
+  @ApiBearerAuth() // Indicating that this endpoint requires bearer authentication which means the client must provide a valid JWT token
+  @ApiOperation({ summary: 'Create a new category (Admin only)' }) 
+  @ApiResponse({ status: 201, description: 'Category created successfully' }) 
+  async create(@Body() createCategoryDto: CreateCategoryDto): Promise<ApiResponseType<any>> { // what is hap 
     const category = await this.categoriesService.create(createCategoryDto);
     return ResponseUtil.created(category, 'Category created successfully');
   }

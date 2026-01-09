@@ -1,10 +1,10 @@
 import { IsString, IsOptional, IsBoolean, IsInt, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform } from 'class-transformer'; // to transform incoming string to int. here we use it for sortOrder.
 
 export class CreateCategoryDto {
   @ApiProperty({ example: 'Whole Spices' })
-  @IsString()
+  @IsString() //here we haven't used IsNotEmpty() or IsOptional() so it is required by default.
   name: string;
 
   @ApiProperty({ example: 'Premium quality whole spices sourced from organic farms' })

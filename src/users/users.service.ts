@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -89,4 +89,37 @@ export class UsersService {
       lastLogin: new Date() 
     });
   }
+
+  async resetPassword(userId: string, resetPasswordDto: { currentPassword: string; newPassword: string }): Promise<User> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await this.validatePassword(
+      resetPasswordDto.currentPassword,
+      user.password,
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    // Hash the new password
+    const saltRounds = 12;
+    const hashedNewPassword = await bcrypt.hash(resetPasswordDto.newPassword, saltRounds);
+
+    // Update the password
+    await this.usersRepository.update(userId, { password: hashedNewPassword });
+
+    // Return the updated user
+    const updatedUser = await this.findById(userId);
+    if (!updatedUser) {
+      throw new NotFoundException('User not found after update');
+    }
+
+    return updatedUser;
+  }
+
 }

@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
-export enum UserRole {
-  CUSTOMER = 'customer',
+export enum UserRole { // 
+  CUSTOMER = 'customer', // rightside value for storing in DB and to put in response. 
   ADMIN = 'admin',
 }
 

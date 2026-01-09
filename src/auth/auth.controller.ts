@@ -8,6 +8,7 @@ import { RoleGuard } from './guards/role.guard';
 import { Roles } from './decorators/roles.decorator';
 import { UserRole } from '../entities';
 import { ResponseUtil } from '../common/utils/response.util';
+import { DateUtil } from '../common/utils/date.util';
 import type { ApiResponse as ApiResponseType } from '../common/utils/response.util';
 
 @ApiTags('Authentication')
@@ -22,7 +23,11 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   async register(@Body() registerDto: RegisterDto): Promise<ApiResponseType<{ user: any; message: string }>> {
     const result = await this.authService.register(registerDto);
-    return ResponseUtil.created(result, result.message);
+    const resultWithLocalTime = {
+      ...result,
+      user: DateUtil.transformDateFields(result.user, ['createdAt', 'updatedAt'])
+    };
+    return ResponseUtil.created(resultWithLocalTime, result.message);
   }
 
   @Public()
@@ -45,6 +50,10 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'Admin registered successfully' })
   async registerAdmin(@Body() adminRegisterDto: AdminRegisterDto): Promise<ApiResponseType<{ user: any; message: string }>> {
     const result = await this.authService.registerAdmin(adminRegisterDto);
-    return ResponseUtil.created(result, result.message);
+    const resultWithLocalTime = {
+      ...result,
+      user: DateUtil.transformDateFields(result.user, ['createdAt', 'updatedAt'])
+    };
+    return ResponseUtil.created(resultWithLocalTime, result.message);
   }
 }

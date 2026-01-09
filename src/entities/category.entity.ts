@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 
 @Entity('categories')
 export class Category {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid') //PostgreSQL will automatically generate a UUID (v4) for every new row like 6f9c1b2e-3f4a-4a0e-9c88-8b1c0e5a4f23. if  you want Auto-increment, use @PrimaryGeneratedColumn(). if you want to generate UUID in the application side like serialNumber, use @PrimaryColumn('uuid') and generate UUID using uuid library before saving.
   id: string;
 
   @Column({ type: 'varchar', length: 100 })

@@ -8,6 +8,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { UserRole } from '../entities';
 import { ResponseUtil } from '../common/utils/response.util';
+import { DateUtil } from '../common/utils/date.util';
 import type { ApiResponse as ApiResponseType } from '../common/utils/response.util';
 
 @ApiTags('Categories')
@@ -23,16 +24,18 @@ export class CategoriesController {
   @ApiResponse({ status: 201, description: 'Category created successfully' }) 
   async create(@Body() createCategoryDto: CreateCategoryDto): Promise<ApiResponseType<any>> { // what is hap 
     const category = await this.categoriesService.create(createCategoryDto);
-    return ResponseUtil.created(category, 'Category created successfully');
+    const categoryWithLocalTime = DateUtil.transformDateFields(category, ['createdAt', 'updatedAt']); // Transforming date fields to local time format for better readability in the response. if there isn't any date fields, this function will simply return the original object without modifications or we can use as simply return ResponseUtil.created(category, 'Category created successfully');
+    return ResponseUtil.created(categoryWithLocalTime, 'Category created successfully'); 
   }
 
   @Get('all')
-  @Public() // Marking this route as public which means it can be accessed without authentication
+  @Public() // Marking this route as public which means it can be accessed without authentication                  
   @ApiOperation({ summary: 'Get all active categories' })
   @ApiResponse({ status: 200, description: 'Categories retrieved successfully' })
   async findAll(): Promise<ApiResponseType<any[]>> { // what is promise<ApiResponseType<any[]>> does is it indicates that this method returns a Promise that resolves to an ApiResponseType containing an array of any type which means the response will include a list of categories
     const categories = await this.categoriesService.findAll(); // Fetching all active categories from the service and storing them in the categories variable which is a list(array) of category objects
-    return ResponseUtil.ok(categories, 'Categories retrieved successfully'); // Returning a standardized success response with the list of categories and a success message
+    const categoriesWithLocalTime = DateUtil.transformArrayDateFields(categories, ['createdAt', 'updatedAt']);
+    return ResponseUtil.ok(categoriesWithLocalTime, 'Categories retrieved successfully'); // Returning a standardized success response with the list of categories and a success message
   }
 
   @Get('admin')
@@ -43,7 +46,8 @@ export class CategoriesController {
   @ApiResponse({ status: 200, description: 'Categories retrieved successfully' })
   async findAllForAdmin(): Promise<ApiResponseType<any[]>> {
     const categories = await this.categoriesService.findAllForAdmin();
-    return ResponseUtil.ok(categories, 'Categories retrieved successfully');
+    const categoriesWithLocalTime = DateUtil.transformArrayDateFields(categories, ['createdAt', 'updatedAt']);
+    return ResponseUtil.ok(categoriesWithLocalTime, 'Categories retrieved successfully');
   }
 
   @Get(':id')
@@ -52,7 +56,8 @@ export class CategoriesController {
   @ApiResponse({ status: 200, description: 'Category retrieved successfully' })
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponseType<any>> { // what is ParseUUIDPipe does is it validates and transforms the 'id' parameter to ensure it is a VALID UUID FORMAT which means if the 'id' is not a valid UUID, an error will be thrown before reaching the service layer and stop further processing
     const category = await this.categoriesService.findOne(id);
-    return ResponseUtil.ok(category, 'Category retrieved successfully');
+    const categoryWithLocalTime = DateUtil.transformDateFields(category, ['createdAt', 'updatedAt']);
+    return ResponseUtil.ok(categoryWithLocalTime, 'Category retrieved successfully');
   }
 
   @Post(':id')
@@ -61,9 +66,10 @@ export class CategoriesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update category (Admin only)' })
   @ApiResponse({ status: 200, description: 'Category updated successfully' })
-  async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateCategoryDto: UpdateCategoryDto,): Promise<ApiResponseType<any>> {
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() updateCategoryDto: UpdateCategoryDto,): Promise<ApiResponseType<any>> { //ParseUUIDPipe is used to validate that the id parameter is a valid UUID. if not, it will throw an error before reaching the service layer.
     const category = await this.categoriesService.update(id, updateCategoryDto);
-    return ResponseUtil.ok(category, 'Category updated successfully');
+    const categoryWithLocalTime = DateUtil.transformDateFields(category, ['createdAt', 'updatedAt']);
+    return ResponseUtil.ok(categoryWithLocalTime, 'Category updated successfully');
   }
 
   @Post('toggle-active/:id')
@@ -74,7 +80,8 @@ export class CategoriesController {
   @ApiResponse({ status: 200, description: 'Category status updated successfully' })
   async toggleActive(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponseType<any>> {
     const category = await this.categoriesService.toggleActive(id);
-    return ResponseUtil.ok(category, 'Category status updated successfully');
+    const categoryWithLocalTime = DateUtil.transformDateFields(category, ['createdAt', 'updatedAt']);
+    return ResponseUtil.ok(categoryWithLocalTime, 'Category status updated successfully');
   }
 
   @Post('delete/:id')
@@ -83,7 +90,7 @@ export class CategoriesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Soft delete category (Admin only)' })
   @ApiResponse({ status: 200, description: 'Category deleted successfully' })
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponseType<null>> {
+  async softDelete(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponseType<null>> {
     await this.categoriesService.softDelete(id);
     return ResponseUtil.ok(null, 'Category deleted successfully');
   }

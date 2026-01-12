@@ -30,7 +30,7 @@ export class UsersController {
     return ResponseUtil.ok(profileWithLocalTime, 'Profile retrieved successfully');
   }
 
-  @Post('profile/update')
+  @Post('profile/update') //*************
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })
   async updateProfile(

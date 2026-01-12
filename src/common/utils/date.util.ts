@@ -54,7 +54,7 @@ export class DateUtil {
    */
   static transformDateFields<T extends Record<string, any>>(
     obj: T, 
-    dateFields: (keyof T)[] = ['createdAt', 'updatedAt']
+    dateFields: (keyof T)[] = ['createdAt', 'updatedAt'] //what this line does is it defines a default value for the dateFields parameter. If no specific fields are provided when calling the function, it will default to transforming the createdAt and updatedAt fields of the object.(//what is keyof T does is it represents the keys of the type T which means it ensures that the dateFields array only contains valid keys that exist on the object T which are typically date fields like createdAt and updatedAt.)
   ): T {
     const transformed = { ...obj };
     

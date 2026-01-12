@@ -21,11 +21,11 @@ export class CategoriesService {
       .trim(); // remove leading and trailing spaces
   }
 
-  async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
+  async create(createCategoryDto: CreateCategoryDto): Promise<Category> { // Here Promise<Category> means...
     const slug = this.generateSlug(createCategoryDto.name); // Generate slug from category name. this.generateSlug is a method defined above and here this. refers to the current instance of CategoriesService class.
     
     // Check if slug already exists.
-    const existingCategory = await this.categoriesRepository.findOne({ //existingCategory will be either a Category object if a matching record is found or null if no match is found
+    const existingCategory = await this.categoriesRepository.findOne({ //existingCategory will be either a Category object if a matching record is found or null if no match is found. difference between findOne and find methods is that findOne returns a single entity or null, while find returns an array of entities.
       where: { slug }, // here where: { slug } is shorthand for where: { slug: slug }. Find a category where the slug column equals the generated slug
     });
 
@@ -33,13 +33,13 @@ export class CategoriesService {
       throw new ConflictException('Category with this name already exists');
     }
 
-    const category = this.categoriesRepository.create({ // Create a new Category entity object with the provided data
+    const category = this.categoriesRepository.create({ // Create and prepare a new Category entity object with the provided data. create method prepares a new entity instance but does not save it to the database yet.
       ...createCategoryDto, // *****************Spread operator to copy properties from createCategoryDto and here ...createCategoryDto means "take all properties from createCategoryDto and add them to this new object"
       slug,
       sortOrder: createCategoryDto.sortOrder || 0, // Default sortOrder to 0 if not provided and when it set to 0, it means this category will appear first in the sorted list unless other categories also have a sortOrder of 0. if multiple categories share the same sortOrder, their relative order will be determined by the secondary sorting criteria, which is name in ascending order as defined in the findAll and findAllForAdmin methods below.
     });
 
-    return this.categoriesRepository.save(category);
+    return this.categoriesRepository.save(category); // save the new category to the database and return the saved entity
   }
 
   async findAll(): Promise<Category[]> {
@@ -65,7 +65,7 @@ export class CategoriesService {
 
   async findBySlug(slug: string): Promise<Category> {
     const category = await this.categoriesRepository.findOne({
-      where: { slug, isActive: true },
+      where: { slug, isActive: true }, // whatis happening here is it searches for a category with the given slug that is also active (isActive: true). This ensures that only categories that are currently active are retrieved.
     });
     if (!category) {
       throw new NotFoundException('Category not found');
@@ -94,12 +94,12 @@ export class CategoriesService {
     return this.categoriesRepository.save(category);
   }
 
-  async remove(id: string): Promise<void> {
-    const category = await this.findOne(id);
-    await this.categoriesRepository.remove(category);
-  }
+  // async remove(id: string): Promise<void> {
+  //   const category = await this.findOne(id);
+  //   await this.categoriesRepository.remove(category);
+  // }
 
-  async softDelete(id: string): Promise<void> {
+  async softDelete(id: string): Promise<void> { // here Promise<void> indicates that this method does not return any value when it completes.
     const category = await this.findOne(id);
     category.isActive = false;
     await this.categoriesRepository.save(category);
@@ -111,3 +111,25 @@ export class CategoriesService {
     return this.categoriesRepository.save(category);
   }
 }
+
+
+// random business identifier/ serial number(that entity key should be unique) generate method example:
+
+// private generateCategoryCode(prefix = 'CAT'): string {
+//   const randomCode = Math.random()
+//     .toString(36)
+//     .substring(2, 7)
+//     .toUpperCase(); // 5-char random code
+
+//   const now = new Date(); 
+// or
+// const now = new Date(
+//   new Date().toLocaleString('en-US', { timeZone: 'Asia/Colombo' })
+// );
+
+
+//   const date = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+//   const time = now.toTimeString().slice(0, 8).replace(/:/g, ''); // HHMMSS
+
+//   return ${prefix}-${randomCode}-${date}-${time};
+// }

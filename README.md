@@ -10,7 +10,6 @@ A NestJS-based backend API for selling spices and related organic products.
 - **Validation**: class-validator
 - **Error handling**: Global Exception Filter
 - **Auth**: JWT authentication
-- **Architecture**: Controller → Service → Repository pattern
 
 ## Getting Started
 

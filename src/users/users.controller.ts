@@ -22,7 +22,7 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'User profile retrieved successfully' })
   async getProfile(@Request() req): Promise<ApiResponseType<any>> { // what is @Request() req does is it injects the entire request object into the method, allowing access to properties like req.user which contains the authenticated user's information extracted from the JWT token. for example, req.user = { id: 5, email: 'test@mail.com' }
     const user = await this.usersService.findById(req.user.id); // Fetch user from database using logged-in user's ID.  Fetch the user profile using the ID obtained from the JWT token. for this we call usersService.findById with req.user.id to get the full user details from the database.
-    if (!user) {
+    if (!user) { 
       throw new NotFoundException('User not found');
     }
     const { password, ...userProfile } = user; // Remove password field before sending response. Destructure the user object to exclude the password field from the response for security reasons. how it works: it uses JavaScript destructuring to separate the password property from the rest of the user object. The ...userProfile syntax collects all other properties into a new object called userProfile, effectively omitting the password.
@@ -81,15 +81,6 @@ export class UsersController {
     return ResponseUtil.ok(null, 'User account deactivated successfully');
   }
   
-  // @Post('admin/reset-password/:id')
-  // @UseGuards(RolesGuard)
-  // @Roles(UserRole.ADMIN)
-  // @ApiOperation({ summary: 'Reset user password (Admin only)' })
-  // @ApiResponse({ status: 200, description: 'User password reset successfully' })
-  // async resetUserPassword(@Param('id') id: string): Promise<ApiResponseType<any>> {
-  //   const user = await this.usersService.resetPassword(id);
-  //   const userWithLocalTime = DateUtil.transformDateFields(user, ['createdAt', 'updatedAt', 'lastLogin']);
-  //   return ResponseUtil.ok(userWithLocalTime, 'User password reset successfully');
-  // }
+ 
 
 }

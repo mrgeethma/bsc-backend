@@ -25,19 +25,24 @@ export class ProductsController {
 
   @Get()
   @Public()
-  async findActiveProducts(@Query() query: GetProductsQueryDto): Promise<ApiResponseType<PaginatedProductsResponseDto>> {
+  async findActiveProducts(@Query() query: GetProductsQueryDto): Promise<ApiResponseType<PaginatedProductsResponseDto>> { //here Query decorator is used to extract query parameters from the request URL and map them to the GetProductsQueryDto object. this allows us to easily access and validate the query parameters for filtering, sorting, and pagination when fetching active products. Promise<ApiResponseType<PaginatedProductsResponseDto>> means that this method returns a Promise that resolves to an ApiResponseType containing a PaginatedProductsResponseDto. this indicates that the response will include paginated data about products along with metadata like total count, current page, etc.
     const result = await this.productsService.findActiveProducts(query);
     
     // Transform date fields for all products in the result
     const transformedData = {
-      ...result,
+      ...result, 
       data: DateUtil.transformArrayDateFields(result.data, ['createdAt', 'updatedAt'])
     };
     
     return ResponseUtil.ok(transformedData, 'Active products retrieved successfully');
   }
 
-
+//    or
+// const transformedData = DateUtil.transformArrayDateFields(result.data, ['createdAt', 'updatedAt']);
+// return ResponseUtil.ok(
+//   { ...result, data: transformedData }, // keep meta if exists
+//   'Active products retrieved successfully',
+// );  }
 
   @Get('admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -54,7 +59,7 @@ export class ProductsController {
     return ResponseUtil.ok(transformedData, 'All products retrieved successfully');
   }
 
-  @Get('id/:id')
+  @Get('id/:id') //normally get by id is admin only, but here we are providing public access for testing purpose
   @Public()
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponseType<any>> {
     const product = await this.productsService.findOne(id);

@@ -236,7 +236,7 @@ export class GetProductsQueryDto { // we can use this dto to validate and docume
   isFeatured?: boolean;
 }
 
-export class ProductResponseDto {
+export class ProductResponseDto { // defines the structure of the product data returned in API responses. what is happening here is that it specifies all the properties that a product object will have when it is sent back to the client in response to API requests.
   id: string;
 
   name: string;
@@ -288,7 +288,7 @@ export class ProductResponseDto {
   updatedAt: Date;
 }
 
-export class PaginatedProductsResponseDto {
+export class PaginatedProductsResponseDto { // defines the structure of a paginated response for a list of products. what is happening here is that it specifies that the response will include an array of product data along with pagination metadata such as total items, current page, items per page, total pages, and indicators for next and previous pages.
   data: ProductResponseDto[];
 
   total: number;

@@ -7,6 +7,7 @@ import { validationSchema } from './config/validation.config'; // import validat
 import { AuthModule } from './auth/auth.module'; // import AuthModule to handle authentication and authorization features from a custom auth module
 import { UsersModule } from './users/users.module'; // import UsersModule to manage user-related operations and features from a custom users module
 import { CategoriesModule } from './categories/categories.module'; // import CategoriesModule to manage product categories and related features from a custom categories module
+import { ProductsModule } from './products/products.module'; // import ProductsModule to manage products and related features from a custom products module
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CategoriesModule } from './categories/categories.module'; // import Cat
     AuthModule, // Import AuthModule to handle authentication and authorization features
     UsersModule, // Import UsersModule to manage user-related operations and features
     CategoriesModule, // Import CategoriesModule to manage product categories and related features
+    ProductsModule, // Import ProductsModule to manage products and related features
   ],
   controllers: [AppController],
 })

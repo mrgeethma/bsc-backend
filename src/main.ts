@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'; // Swagger for API documentation and DocumentBuilder to configure it
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter'; // Global exception filter to handle all unhandled exceptions
 import helmet from 'helmet'; // Helmet helps secure Express apps by setting various HTTP headers and is a security best practice
 import express from 'express'; // Import Express framework for creating the server
@@ -36,19 +35,9 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true}));  // Enable global validation pipe. here: transform - auto transform payloads to DTO instances; whitelist - strip non-whitelisted properties; forbidNonWhitelisted - throw error on non-whitelisted properties. in simply whitelisted properties mean only properties defined in the DTO will be accepted.
   app.useGlobalFilters(new AllExceptionsFilter());  // Use global exception filter. this filter will catch all unhandled exceptions and format the response.
 
-  const config = new DocumentBuilder()  // Setup Swagger API docs. what is Swagger? Swagger (OpenAPI) is a framework for API documentation and testing. in here we are configuring the Swagger document with title, description, version, and security schemes.
-    .setTitle('BSC Organics API')
-    .setDescription('E-commerce API for spices and organic products') 
-    .setVersion('1.0') // Set API version
-    .addBearerAuth() // Add Bearer auth to Swagger
-    .build(); // Build Swagger document configuration
-  const document = SwaggerModule.createDocument(app, config); // Create Swagger document
-  SwaggerModule.setup('api', app, document); // Setup Swagger module at /api endpoint
-
   const port = process.env.PORT || 3001
   await app.listen(port); //Start listening on configured port which means the server is now running and ready to accept requests on the specified port.
   
     console.log(`🚀 BSC Organics API is running on: http://localhost:${port}`);
-    console.log(`📚 Swagger documentation available at: http://localhost:${port}/api`);
 }
 bootstrap(); // Bootstrap the application

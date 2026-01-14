@@ -60,4 +60,8 @@ export class ResponseUtil { // Utility class to create standardized API response
     static internalServerError(message = 'Internal server error.', errors?: ValidationErrorItem[]): ApiResponse<null> {
         return this.fail(message, 500, errors);
     }
+
+    static negativeSuccess(message = 'Negative success.', errors?: ValidationErrorItem[]): ApiResponse<null> {
+        return this.fail(message, 200, errors = []);
+    }
 }

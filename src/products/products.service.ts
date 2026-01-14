@@ -1,19 +1,24 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { Product, Category } from '../entities';
-import { 
-  CreateProductDto, 
-  UpdateProductDto, 
-  GetProductsQueryDto, 
-  ProductResponseDto, 
-  PaginatedProductsResponseDto,
-  SortBy,
-  Order 
-} from './dto/product.dto';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { PaginationQueryDto } from './dto/pagination-query.dto';
+import { ERROR_MESSAGES } from '../common/constants/error-messages';
+import { SUCCESS_MESSAGES } from '../common/constants/success-messages';
+
+// Define ApiResponse interface inline like expen6_backend
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
 
 @Injectable()
 export class ProductsService {
+  private readonly logger = new Logger(ProductsService.name);
+
   constructor(
     @InjectRepository(Product)
     private productsRepository: Repository<Product>,
@@ -28,89 +33,6 @@ export class ProductsService {
       .replace(/\s+/g, '-') // replace spaces with hyphens
       .replace(/-+/g, '-') // collapse multiple hyphens into a single hyphen
       .trim(); // remove leading and trailing spaces
-  }
-
-  private buildProductQuery(
-    queryBuilder: SelectQueryBuilder<Product>,
-    query: GetProductsQueryDto,
-  ): SelectQueryBuilder<Product> {
-    // Join with category for filtering and response
-    queryBuilder.leftJoinAndSelect('product.category', 'category');
-
-    // Filter by category
-    if (query.category) {
-      queryBuilder.andWhere('category.slug = :categorySlug', { 
-        categorySlug: query.category 
-      });
-    }
-
-    // Price range filtering
-    if (query.minPrice !== undefined) {
-      queryBuilder.andWhere('product.price >= :minPrice', { 
-        minPrice: query.minPrice 
-      });
-    }
-
-    if (query.maxPrice !== undefined) {
-      queryBuilder.andWhere('product.price <= :maxPrice', { 
-        maxPrice: query.maxPrice 
-      });
-    }
-
-    // Search functionality
-    if (query.search) {
-      queryBuilder.andWhere(
-        '(product.name ILIKE :search OR product.description ILIKE :search OR product.shortDescription ILIKE :search OR array_to_string(product.tags, \',\') ILIKE :search)',
-        { search: `%${query.search}%` }
-      );
-    }
-
-    // Filter by active status
-    if (query.isActive !== undefined) {
-      queryBuilder.andWhere('product.isActive = :isActive', { 
-        isActive: query.isActive 
-      });
-    }
-
-    // Filter by stock status
-    if (query.inStock !== undefined) {
-      queryBuilder.andWhere('product.inStock = :inStock', { 
-        inStock: query.inStock 
-      });
-    }
-
-    // Filter by featured status
-    if (query.isFeatured !== undefined) {
-      queryBuilder.andWhere('product.isFeatured = :isFeatured', { 
-        isFeatured: query.isFeatured 
-      });
-    }
-
-    // Sorting
-    const sortBy = query.sortBy || SortBy.SORT_ORDER;
-    const order = query.order || Order.ASC;
-
-    switch (sortBy) {
-      case SortBy.NAME:
-        queryBuilder.orderBy('product.name', order.toUpperCase() as 'ASC' | 'DESC');
-        break;
-      case SortBy.PRICE:
-        queryBuilder.orderBy('product.price', order.toUpperCase() as 'ASC' | 'DESC');
-        break;
-      case SortBy.CREATED_AT:
-        queryBuilder.orderBy('product.createdAt', order.toUpperCase() as 'ASC' | 'DESC');
-        break;
-      case SortBy.UPDATED_AT:
-        queryBuilder.orderBy('product.updatedAt', order.toUpperCase() as 'ASC' | 'DESC');
-        break;
-      case SortBy.SORT_ORDER:
-      default:
-        queryBuilder.orderBy('product.sortOrder', order.toUpperCase() as 'ASC' | 'DESC');
-        queryBuilder.addOrderBy('product.name', 'ASC'); // Secondary sort by name
-        break;
-    }
-
-    return queryBuilder;
   }
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
@@ -159,102 +81,60 @@ export class ProductsService {
     return this.productsRepository.save(product);
   }
 
-  async findActiveProducts(query: GetProductsQueryDto = {}): Promise<PaginatedProductsResponseDto> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
+  async findAllActive(paginationQuery: PaginationQueryDto): Promise<{
+    items: Product[];
+    page: number;
+    per_page: number;
+    total_items: number;
+    total_pages: number;
+  }> {
+    const { page = 1, per_page = 10 } = paginationQuery;
 
-    const queryBuilder = this.productsRepository.createQueryBuilder('product');
-    
-    // Always filter for active products only in this method
-    queryBuilder.andWhere('product.isActive = :isActive', { isActive: true });
-    
-    // Apply filters and sorting
-    this.buildProductQuery(queryBuilder, query);
-
-    // Get total count for pagination
-    const totalQueryBuilder = queryBuilder.clone();
-    const total = await totalQueryBuilder.getCount();
+    const queryBuilder = this.productsRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .where('product.isActive = :isActive', { isActive: true })
+      .orderBy('product.createdAt', 'DESC');
 
     // Apply pagination
-    queryBuilder.skip(skip).take(limit);
+    queryBuilder.skip((page - 1) * per_page).take(per_page);
 
-    const products = await queryBuilder.getMany();
-
-    const totalPages = Math.ceil(total / limit);
+    const [items, total_items] = await queryBuilder.getManyAndCount();
 
     return {
-      data: products.map(this.mapToResponseDto),
-      total,
+      items,
       page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
+      per_page,
+      total_items,
+      total_pages: Math.ceil(total_items / per_page),
     };
   }
 
-  async findAllProducts(query: GetProductsQueryDto = {}): Promise<PaginatedProductsResponseDto> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
+  async findAllForAdmin(paginationQuery: PaginationQueryDto): Promise<{
+    items: Product[];
+    page: number;
+    per_page: number;
+    total_items: number;
+    total_pages: number;
+  }> {
+    const { page = 1, per_page = 10 } = paginationQuery;
 
-    const queryBuilder = this.productsRepository.createQueryBuilder('product');
-    
-    // Apply filters and sorting (no automatic isActive filter)
-    this.buildProductQuery(queryBuilder, query);
-
-    // Get total count for pagination
-    const totalQueryBuilder = queryBuilder.clone();
-    const total = await totalQueryBuilder.getCount();
-
-    // Apply pagination
-    queryBuilder.skip(skip).take(limit);
-
-    const products = await queryBuilder.getMany();
-
-    const totalPages = Math.ceil(total / limit);
-
-    return {
-      data: products.map(this.mapToResponseDto),
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
-    };
-  }
-
-  async findAll(query: GetProductsQueryDto = {}): Promise<PaginatedProductsResponseDto> {
-    const page = query.page || 1;
-    const limit = query.limit || 10;
-    const skip = (page - 1) * limit;
-
-    const queryBuilder = this.productsRepository.createQueryBuilder('product');
-    
-    // Apply filters and sorting
-    this.buildProductQuery(queryBuilder, query);
-
-    // Get total count for pagination
-    const totalQueryBuilder = queryBuilder.clone();
-    const total = await totalQueryBuilder.getCount();
+    const queryBuilder = this.productsRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .orderBy('product.createdAt', 'DESC');
 
     // Apply pagination
-    queryBuilder.skip(skip).take(limit);
+    queryBuilder.skip((page - 1) * per_page).take(per_page);
 
-    const products = await queryBuilder.getMany();
-
-    const totalPages = Math.ceil(total / limit);
+    const [items, total_items] = await queryBuilder.getManyAndCount();
 
     return {
-      data: products.map(this.mapToResponseDto),
-      total,
+      items,
       page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPreviousPage: page > 1,
+      per_page,
+      total_items,
+      total_pages: Math.ceil(total_items / per_page),
     };
   }
 
@@ -377,36 +257,4 @@ export class ProductsService {
 
     return updatedProduct;
   }
-
-  private mapToResponseDto = (product: Product): ProductResponseDto => {
-    return {
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      description: product.description,
-      shortDescription: product.shortDescription,
-      price: product.price,
-      comparePrice: product.comparePrice,
-      currency: product.currency,
-      images: product.images,
-      sku: product.sku,
-      weight: product.weight,
-      unit: product.unit,
-      isActive: product.isActive,
-      inStock: product.inStock,
-      isFeatured: product.isFeatured,
-      sortOrder: product.sortOrder,
-      tags: product.tags,
-      review: product.review,
-      reviewCount: product.reviewCount,
-      categoryId: product.categoryId,
-      category: product.category ? {
-        id: product.category.id,
-        name: product.category.name,
-        slug: product.category.slug,
-      } : undefined,
-      createdAt: product.createdAt,
-      updatedAt: product.updatedAt,
-    };
-  };
 }

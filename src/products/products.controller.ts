@@ -27,39 +27,25 @@ export class ProductsController {
 
   @Get()
   @Public()
-  async findAllActive(
-    @Query() dto: PaginationQueryDto,
-  ): Promise<ApiResponseType<any>> {
+  async findAllActive(@Query() dto: PaginationQueryDto,  ): Promise<ApiResponseType<any>> {
     const result = await this.productsService.findAllActive(dto);
     const productsWithLocalTime = {
       ...result, // spread operator to copy all properties from result
-      items: result.items.map((product) =>
-        DateUtil.transformDateFields(product, ['createdAt', 'updatedAt']),
-      ),
+      items: result.items.map((product) => DateUtil.transformDateFields(product, ['createdAt', 'updatedAt'])),
     }; //instead
-    return ResponseUtil.ok(
-      productsWithLocalTime,
-      'Products retrieved successfully',
-    );
+    return ResponseUtil.ok(productsWithLocalTime, 'Products retrieved successfully');
   }
 
   @Get('admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async findAllForAdmin(
-    @Query() dto: PaginationQueryDto,
-  ): Promise<ApiResponseType<any>> {
+  async findAllForAdmin(@Query() dto: PaginationQueryDto): Promise<ApiResponseType<any>> {
     const result = await this.productsService.findAllForAdmin(dto);
     const productsWithLocalTime = {
       ...result,
-      items: result.items.map((product) =>
-        DateUtil.transformDateFields(product, ['createdAt', 'updatedAt']),
-      ),
+      items: result.items.map((product) =>DateUtil.transformDateFields(product, ['createdAt', 'updatedAt'])),
     };
-    return ResponseUtil.ok(
-      productsWithLocalTime,
-      'All products retrieved successfully',
-    );
+    return ResponseUtil.ok(productsWithLocalTime, 'All products retrieved successfully');
   }
 
   @Post()
@@ -67,26 +53,15 @@ export class ProductsController {
   @Roles(UserRole.ADMIN)
   async create(@Body() dto: CreateProductDto): Promise<ApiResponseType<any>> {
     const product = await this.productsService.create(dto);
-    const productWithLocalTime = DateUtil.transformDateFields(product, [
-      'createdAt',
-      'updatedAt',
-    ]); // here we are transforming the createdAt and updatedAt fields of the product to local time using DateUtil before sending the response.
-    return ResponseUtil.created(
-      productWithLocalTime,
-      'Product created successfully',
-    );
-  }
+    const productWithLocalTime = DateUtil.transformDateFields(product, ['createdAt', 'updatedAt']); // here we are transforming the createdAt and updatedAt fields of the product to local time using DateUtil before sending the response.
+    return ResponseUtil.created(productWithLocalTime, 'Product created successfully');       
+        }
 
   @Get('id/:id') //normally get by id is admin only, but here we are providing public access for testing purpose
   @Public()
-  async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponseType<any>> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponseType<any>> {
     const product = await this.productsService.findOne(id);
-    const productWithLocalTime = DateUtil.transformDateFields(product, [
-      'createdAt',
-      'updatedAt',
-    ]);
+    const productWithLocalTime = DateUtil.transformDateFields(product, ['createdAt', 'updatedAt']);     
     return ResponseUtil.ok(productWithLocalTime, 'Product found successfully');
   }
 
@@ -94,25 +69,17 @@ export class ProductsController {
   @Public()
   async findBySlug(@Param('slug') slug: string): Promise<ApiResponseType<any>> {
     const product = await this.productsService.findBySlug(slug);
-    const productWithLocalTime = DateUtil.transformDateFields(product, [
-      'createdAt',
-      'updatedAt',
-    ]);
+    const productWithLocalTime = DateUtil.transformDateFields(product, ['createdAt', 'updatedAt']);
     return ResponseUtil.ok(productWithLocalTime, 'Product found successfully');
   }
 
   @Post('update/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateProductDto,
+  async update(@Param('id', ParseUUIDPipe) id: string,@Body() dto: UpdateProductDto,
   ): Promise<ApiResponseType<any>> {
     const product = await this.productsService.update(id, dto);
-    const productWithLocalTime = DateUtil.transformDateFields(product, [
-      'createdAt',
-      'updatedAt',
-    ]);
+    const productWithLocalTime = DateUtil.transformDateFields(product, ['createdAt', 'updatedAt']); 
     return ResponseUtil.ok(
       productWithLocalTime,
       'Product updated successfully',
@@ -122,8 +89,7 @@ export class ProductsController {
   @Post('delete/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async remove(
-    @Param('id', ParseUUIDPipe) id: string,
+  async remove(@Param('id', ParseUUIDPipe) id: string,
   ): Promise<ApiResponseType<null>> {
     await this.productsService.softDelete(id);
     return ResponseUtil.ok(null, 'Product deleted successfully');
@@ -132,17 +98,10 @@ export class ProductsController {
   @Post('toggle-status/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async toggleActiveStatus(
-    @Param('id', ParseUUIDPipe) id: string,
+  async toggleActiveStatus(@Param('id', ParseUUIDPipe) id: string,
   ): Promise<ApiResponseType<any>> {
     const product = await this.productsService.toggleActiveStatus(id);
-    const productWithLocalTime = DateUtil.transformDateFields(product, [
-      'createdAt',
-      'updatedAt',
-    ]);
-    return ResponseUtil.ok(
-      productWithLocalTime,
-      'Product status toggled successfully',
-    );
+    const productWithLocalTime = DateUtil.transformDateFields(product, ['createdAt', 'updatedAt']); 
+    return ResponseUtil.ok(productWithLocalTime,'Product status toggled successfully'); 
   }
 }

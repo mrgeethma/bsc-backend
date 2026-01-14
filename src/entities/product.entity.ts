@@ -1,7 +1,15 @@
 //if not have mentioned as nullable, it will be considered as not null by default. because in typeorm, by default, columns are not nullable unless explicitly specified.
-//string,number,boolean,date are primitive types 
+//string,number,boolean,date are primitive types
 //int, varchar, text, uuid, boolean, json,decimal are database column types
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Category } from './category.entity';
 
 @Entity('products')
@@ -48,7 +56,7 @@ export class Product {
   @Column({ type: 'boolean', default: true })
   inStock: boolean;
 
-  @Column({ type: 'boolean', default: false }) 
+  @Column({ type: 'boolean', default: false })
   isFeatured: boolean;
 
   @Column({ type: 'int', default: 0 })
@@ -77,4 +85,3 @@ export class Product {
   @UpdateDateColumn()
   updatedAt: Date;
 }
-

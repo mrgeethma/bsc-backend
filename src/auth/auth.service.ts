@@ -1,7 +1,12 @@
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
-import { LoginDto, RegisterDto, AdminRegisterDto, AuthResponseDto } from './dto/auth.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  AdminRegisterDto,
+  AuthResponseDto,
+} from './dto/auth.dto';
 import { User, UserRole } from '../entities';
 
 @Injectable()
@@ -13,50 +18,62 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<{ user: any; message: string }> {
-    this.logger.log(`Customer registration attempt for email: ${registerDto.email}`);
-    
+  async register(
+    registerDto: RegisterDto,
+  ): Promise<{ user: any; message: string }> {
+    this.logger.log(
+      `Customer registration attempt for email: ${registerDto.email}`,
+    );
+
     // Force customer role for public registration
     const customerData = {
       ...registerDto,
-      role: UserRole.CUSTOMER
+      role: UserRole.CUSTOMER,
     };
-    
+
     const user = await this.usersService.create(customerData);
-    
+
     // Don't return token on registration for security
     const { password, ...userWithoutPassword } = user;
-    
+
     return {
       user: userWithoutPassword,
-      message: 'Customer registration successful. Please login to get access token.'
+      message:
+        'Customer registration successful. Please login to get access token.',
     };
   }
 
-  async registerAdmin(adminRegisterDto: AdminRegisterDto): Promise<{ user: any; message: string }> {
-    this.logger.log(`Admin registration attempt for email: ${adminRegisterDto.email}`);
-    
+  async registerAdmin(
+    adminRegisterDto: AdminRegisterDto,
+  ): Promise<{ user: any; message: string }> {
+    this.logger.log(
+      `Admin registration attempt for email: ${adminRegisterDto.email}`,
+    );
+
     // Only allow ADMIN role creation through this method
     if (adminRegisterDto.role !== UserRole.ADMIN) {
-      throw new UnauthorizedException('This endpoint only allows admin account creation');
+      throw new UnauthorizedException(
+        'This endpoint only allows admin account creation',
+      );
     }
-    
+
     const user = await this.usersService.create(adminRegisterDto);
-    
+
     // Don't return token on registration for security
     const { password, ...userWithoutPassword } = user;
-    
+
     return {
       user: userWithoutPassword,
-      message: 'Admin registration successful. Please login to get access token.'
+      message:
+        'Admin registration successful. Please login to get access token.',
     };
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     this.logger.log(`Login attempt for email: ${loginDto.email}`);
-    
+
     const user = await this.usersService.findByEmail(loginDto.email);
-    
+
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -79,7 +96,7 @@ export class AuthService {
   private async generateAuthResponse(user: User): Promise<AuthResponseDto> {
     // Get the user with updated lastLogin timestamp
     const updatedUser = await this.usersService.findById(user.id);
-    
+
     const payload = {
       sub: user.id,
       email: user.email,

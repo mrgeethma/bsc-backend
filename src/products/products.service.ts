@@ -1,19 +1,15 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Product, Category } from '../entities';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
-import { ERROR_MESSAGES } from '../common/constants/error-messages';
-import { SUCCESS_MESSAGES } from '../common/constants/success-messages';
-
-// Define ApiResponse interface inline like expen6_backend
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
 
 @Injectable()
 export class ProductsService {
@@ -37,7 +33,7 @@ export class ProductsService {
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
     const slug = this.generateSlug(createProductDto.name);
-    
+
     // Check if slug already exists
     const existingProduct = await this.productsRepository.findOne({
       where: { slug },
@@ -72,8 +68,14 @@ export class ProductsService {
       slug,
       sortOrder: createProductDto.sortOrder || 0,
       currency: createProductDto.currency || 'LKR',
-      isActive: createProductDto.isActive !== undefined ? createProductDto.isActive : true,
-      inStock: createProductDto.inStock !== undefined ? createProductDto.inStock : true,
+      isActive:
+        createProductDto.isActive !== undefined
+          ? createProductDto.isActive
+          : true,
+      inStock:
+        createProductDto.inStock !== undefined
+          ? createProductDto.inStock
+          : true,
       isFeatured: createProductDto.isFeatured || false,
       reviewCount: createProductDto.reviewCount || 0,
     });
@@ -164,7 +166,10 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
+  async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+  ): Promise<Product> {
     const product = await this.productsRepository.findOne({
       where: { id },
     });
@@ -210,7 +215,10 @@ export class ProductsService {
     }
 
     // Merge the updates
-    const updatedProduct = this.productsRepository.merge(product, updateProductDto);
+    const updatedProduct = this.productsRepository.merge(
+      product,
+      updateProductDto,
+    );
     return this.productsRepository.save(updatedProduct);
   }
 

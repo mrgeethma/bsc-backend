@@ -1,4 +1,11 @@
-import { IsEmail, IsString, MinLength, IsOptional, IsEnum, IsNotEmpty } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  IsOptional,
+  IsEnum,
+  IsNotEmpty,
+} from 'class-validator';
 import { UserRole } from '../../entities';
 
 // Public registration DTO - only for customers
@@ -18,7 +25,7 @@ export class RegisterDto {
   @IsString()
   @MinLength(6)
   password: string;
-  
+
   // Role is not included - automatically set to CUSTOMER
 }
 

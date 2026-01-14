@@ -16,9 +16,9 @@ export class LoggingMiddleware implements NestMiddleware {
       const contentLength = res.get('Content-Length') || '0';
 
       const logLevel = statusCode >= 400 ? 'error' : 'log';
-      
+
       this.logger[logLevel](
-        `${method} ${originalUrl} ${statusCode} ${contentLength}b - ${responseTime}ms - ${ip} ${userAgent}`
+        `${method} ${originalUrl} ${statusCode} ${contentLength}b - ${responseTime}ms - ${ip} ${userAgent}`,
       );
     });
 

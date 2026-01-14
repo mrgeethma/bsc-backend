@@ -1,6 +1,18 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, AdminRegisterDto, AuthResponseDto } from './dto/auth.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  AdminRegisterDto,
+  AuthResponseDto,
+} from './dto/auth.dto';
 import { Public } from './decorators/public.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RoleGuard } from './guards/role.guard';
@@ -16,11 +28,16 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  async register(@Body() registerDto: RegisterDto): Promise<ApiResponseType<{ user: any; message: string }>> {
+  async register(
+    @Body() registerDto: RegisterDto,
+  ): Promise<ApiResponseType<{ user: any; message: string }>> {
     const result = await this.authService.register(registerDto);
     const resultWithLocalTime = {
       ...result,
-      user: DateUtil.transformDateFields(result.user, ['createdAt', 'updatedAt'])
+      user: DateUtil.transformDateFields(result.user, [
+        'createdAt',
+        'updatedAt',
+      ]),
     };
     return ResponseUtil.created(resultWithLocalTime, result.message);
   }
@@ -28,7 +45,9 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto): Promise<ApiResponseType<AuthResponseDto>> {
+  async login(
+    @Body() loginDto: LoginDto,
+  ): Promise<ApiResponseType<AuthResponseDto>> {
     const result = await this.authService.login(loginDto);
     return ResponseUtil.ok(result, 'Login successful');
   }
@@ -36,11 +55,16 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, RoleGuard)
   @Roles(UserRole.ADMIN)
   @Post('admin/register')
-  async registerAdmin(@Body() adminRegisterDto: AdminRegisterDto): Promise<ApiResponseType<{ user: any; message: string }>> {
+  async registerAdmin(
+    @Body() adminRegisterDto: AdminRegisterDto,
+  ): Promise<ApiResponseType<{ user: any; message: string }>> {
     const result = await this.authService.registerAdmin(adminRegisterDto);
     const resultWithLocalTime = {
       ...result,
-      user: DateUtil.transformDateFields(result.user, ['createdAt', 'updatedAt'])
+      user: DateUtil.transformDateFields(result.user, [
+        'createdAt',
+        'updatedAt',
+      ]),
     };
     return ResponseUtil.created(resultWithLocalTime, result.message);
   }

@@ -6,76 +6,94 @@ import { validateSync } from 'class-validator'; // validateSync is a function fr
 import { DatabaseConfig } from './dto/database-config'; // Importing a custom DTO that defines the structure and validation rules for database configuration.
 
 @Injectable()
-export class TypeOrmConfigService implements TypeOrmOptionsFactory { // This service implements TypeOrmOptionsFactory to provide dynamic TypeORM configuration. here dynamic means it can change based on environment variables or other runtime conditions(like dev, prod, test, stage etc)
-    private readonly logger = new Logger(TypeOrmConfigService.name); // Creating a logger instance specific to this service for logging messages. here TypeOrmConfigService.name provides the context for the logger, making it clear which part of the application the log messages are coming from. readonly means the property cannot be reassigned or modified after its initial assignment.
-    private readonly config: DatabaseConfig; // here config property will hold the validated database configuration settings which means once assigned, the config property cannot be reassigned to a different value.
+export class TypeOrmConfigService implements TypeOrmOptionsFactory {
+  // This service implements TypeOrmOptionsFactory to provide dynamic TypeORM configuration. here dynamic means it can change based on environment variables or other runtime conditions(like dev, prod, test, stage etc)
+  private readonly logger = new Logger(TypeOrmConfigService.name); // Creating a logger instance specific to this service for logging messages. here TypeOrmConfigService.name provides the context for the logger, making it clear which part of the application the log messages are coming from. readonly means the property cannot be reassigned or modified after its initial assignment.
+  private readonly config: DatabaseConfig; // here config property will hold the validated database configuration settings which means once assigned, the config property cannot be reassigned to a different value.
 
-    constructor(private readonly configService: ConfigService) { // Injecting ConfigService to access environment variables and application configuration settings. here this. means the current instance of the TypeOrmConfigService class and this.config refers to the config property defined above.
-        this.config = this.validateConfig(); // Validating and assigning the database configuration settings during service initialization. 
-        this.logResolvedConfig(); // Logging the resolved database configuration for transparency.
+  constructor(private readonly configService: ConfigService) {
+    // Injecting ConfigService to access environment variables and application configuration settings. here this. means the current instance of the TypeOrmConfigService class and this.config refers to the config property defined above.
+    this.config = this.validateConfig(); // Validating and assigning the database configuration settings during service initialization.
+    this.logResolvedConfig(); // Logging the resolved database configuration for transparency.
+  }
+
+  private validateConfig(): DatabaseConfig {
+    // Method to validate and retrieve database configuration settings.
+    const config = new DatabaseConfig(); // Creating a new instance of DatabaseConfig to hold the configuration values.
+
+    config.DATABASE_HOST =
+      this.configService.get<string>('DATABASE_HOST') ?? 'localhost'; // what is happening here? it retrieves the DATABASE_HOST value from the configuration service. If the value is undefined or null, it defaults to 'localhost' using the nullish coalescing operator (??).
+    config.DATABASE_PORT =
+      Number(this.configService.get<string>('DATABASE_PORT')) || 5432; // Here, it retrieves the DATABASE_PORT value from the configuration service as a string, converts it to a number using Number(). If the conversion results in NaN (which is falsy), it defaults to 5432 using the logical OR operator (||).
+    config.DATABASE_USERNAME =
+      this.configService.get<string>('DATABASE_USERNAME') ?? 'postgres';
+    config.DATABASE_PASSWORD =
+      this.configService.get<string>('DATABASE_PASSWORD') ?? 'password';
+    config.DATABASE_NAME =
+      this.configService.get<string>('DATABASE_NAME') ?? 'bsc_organics';
+
+    const syncRaw = this.configService.get<string | boolean>(
+      'DATABASE_SYNCHRONIZE',
+    );
+    config.DATABASE_SYNCHRONIZE =
+      syncRaw === true ||
+      syncRaw === 'true' ||
+      this.configService.get('NODE_ENV') === 'development';
+
+    const errors = validateSync(config, { skipMissingProperties: false });
+    if (errors.length > 0) {
+      this.logger.error(
+        'Invalid database configuration:',
+        JSON.stringify(errors, null, 2),
+      );
+      throw new Error('Database configuration validation failed');
     }
+    return config;
+  }
 
-    private validateConfig(): DatabaseConfig { // Method to validate and retrieve database configuration settings.
-        const config = new DatabaseConfig(); // Creating a new instance of DatabaseConfig to hold the configuration values.
+  private logResolvedConfig() {
+    // Method to log the resolved database configuration settings. what is happening here? It logs the current database configuration values such as host, port, database name, username, and whether synchronization is enabled. This helps in debugging and verifying that the correct configuration is being used.
+    this.logger.log(
+      `DB config -> host=${this.config.DATABASE_HOST} port=${this.config.DATABASE_PORT} ` +
+        `db=${this.config.DATABASE_NAME} user=${this.config.DATABASE_USERNAME} ` +
+        `synchronize=${this.config.DATABASE_SYNCHRONIZE}`,
+    );
+  }
 
-        config.DATABASE_HOST = this.configService.get<string>('DATABASE_HOST') ?? 'localhost'; // what is happening here? it retrieves the DATABASE_HOST value from the configuration service. If the value is undefined or null, it defaults to 'localhost' using the nullish coalescing operator (??).
-        config.DATABASE_PORT = Number(this.configService.get<string>('DATABASE_PORT')) || 5432; // Here, it retrieves the DATABASE_PORT value from the configuration service as a string, converts it to a number using Number(). If the conversion results in NaN (which is falsy), it defaults to 5432 using the logical OR operator (||).
-        config.DATABASE_USERNAME = this.configService.get<string>('DATABASE_USERNAME') ?? 'postgres';
-        config.DATABASE_PASSWORD = this.configService.get<string>('DATABASE_PASSWORD') ?? 'password';
-        config.DATABASE_NAME = this.configService.get<string>('DATABASE_NAME') ?? 'bsc_organics';
+  getTypeOrmConfig(): TypeOrmModuleOptions {
+    // Method to construct and return the TypeORM configuration object based on the validated settings.
+    const useSsl = (process.env.DATABASE_SSL ?? '').toLowerCase() === 'true';
 
-        const syncRaw = this.configService.get<string | boolean>('DATABASE_SYNCHRONIZE');
-        config.DATABASE_SYNCHRONIZE = syncRaw === true || syncRaw === 'true' || this.configService.get('NODE_ENV') === 'development';
+    return {
+      type: 'postgres',
+      host: this.config.DATABASE_HOST,
+      port: this.config.DATABASE_PORT,
+      username: this.config.DATABASE_USERNAME,
+      password: this.config.DATABASE_PASSWORD,
+      database: this.config.DATABASE_NAME,
 
-        const errors = validateSync(config, { skipMissingProperties: false });
-        if (errors.length > 0) {
-            this.logger.error('Invalid database configuration:', JSON.stringify(errors, null, 2));
-            throw new Error('Database configuration validation failed');
-        }
-        return config;
-    }
+      entities: [__dirname + '/../**/*.entity.{ts,js}'],
+      synchronize: this.config.DATABASE_SYNCHRONIZE,
 
-    private logResolvedConfig() { // Method to log the resolved database configuration settings. what is happening here? It logs the current database configuration values such as host, port, database name, username, and whether synchronization is enabled. This helps in debugging and verifying that the correct configuration is being used.
-        this.logger.log(
-            `DB config -> host=${this.config.DATABASE_HOST} port=${this.config.DATABASE_PORT} ` +
-            `db=${this.config.DATABASE_NAME} user=${this.config.DATABASE_USERNAME} ` +
-            `synchronize=${this.config.DATABASE_SYNCHRONIZE}`,
-        );
-    }
+      logger: 'advanced-console',
+      logging: ['error', 'warn'],
+      maxQueryExecutionTime: 1000,
 
-    getTypeOrmConfig(): TypeOrmModuleOptions { // Method to construct and return the TypeORM configuration object based on the validated settings.
-        const useSsl = (process.env.DATABASE_SSL ?? '').toLowerCase() === 'true';
+      ssl: useSsl ? { rejectUnauthorized: false } : false,
 
-        return {
-            type: 'postgres',
-            host: this.config.DATABASE_HOST,
-            port: this.config.DATABASE_PORT,
-            username: this.config.DATABASE_USERNAME,
-            password: this.config.DATABASE_PASSWORD,
-            database: this.config.DATABASE_NAME,
+      extra: {
+        application_name: 'bsc-organics-api',
+        keepAlive: true,
+        connectionTimeoutMillis: 30000,
+        idleTimeoutMillis: 30000,
+        max: 10,
+      },
+      retryAttempts: 10,
+      retryDelay: 2000,
+    };
+  }
 
-            entities: [__dirname + '/../**/*.entity.{ts,js}'],
-            synchronize: this.config.DATABASE_SYNCHRONIZE,
-
-            logger: 'advanced-console',
-            logging: ['error', 'warn'],
-            maxQueryExecutionTime: 1000,
-
-            ssl: useSsl ? { rejectUnauthorized: false } : false,
-
-            extra: {
-                application_name: 'bsc-organics-api',
-                keepAlive: true,
-                connectionTimeoutMillis: 30000,
-                idleTimeoutMillis: 30000,
-                max: 10,
-            },
-            retryAttempts: 10,
-            retryDelay: 2000,
-        };
-    }
-
-    createTypeOrmOptions(): TypeOrmModuleOptions {
-        return this.getTypeOrmConfig();
-    }
+  createTypeOrmOptions(): TypeOrmModuleOptions {
+    return this.getTypeOrmConfig();
+  }
 }

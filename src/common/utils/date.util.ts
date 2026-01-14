@@ -9,7 +9,7 @@ export class DateUtil {
    */
   static toSriLankanTime(date: Date | string): string {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    
+
     return dateObj.toLocaleString('en-LK', {
       timeZone: 'Asia/Colombo',
       year: 'numeric',
@@ -29,7 +29,7 @@ export class DateUtil {
    */
   static toSriLankanTimeISO(date: Date | string): string {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
-    
+
     // Convert to Sri Lankan time and format as ISO-like string
     const options: Intl.DateTimeFormatOptions = {
       timeZone: 'Asia/Colombo',
@@ -53,18 +53,18 @@ export class DateUtil {
    * @returns New object with converted date fields
    */
   static transformDateFields<T extends Record<string, any>>(
-    obj: T, 
-    dateFields: (keyof T)[] = ['createdAt', 'updatedAt'] //what this line does is it defines a default value for the dateFields parameter. If no specific fields are provided when calling the function, it will default to transforming the createdAt and updatedAt fields of the object.(//what is keyof T does is it represents the keys of the type T which means it ensures that the dateFields array only contains valid keys that exist on the object T which are typically date fields like createdAt and updatedAt.)
+    obj: T,
+    dateFields: (keyof T)[] = ['createdAt', 'updatedAt'], //what this line does is it defines a default value for the dateFields parameter. If no specific fields are provided when calling the function, it will default to transforming the createdAt and updatedAt fields of the object.(//what is keyof T does is it represents the keys of the type T which means it ensures that the dateFields array only contains valid keys that exist on the object T which are typically date fields like createdAt and updatedAt.)
   ): T {
     const transformed = { ...obj };
-    
-    dateFields.forEach(field => {
+
+    dateFields.forEach((field) => {
       const fieldValue = transformed[field];
       if (fieldValue && this.isDateLike(fieldValue)) {
         transformed[field] = this.toSriLankanTimeISO(fieldValue) as T[keyof T];
       }
     });
-    
+
     return transformed;
   }
 
@@ -84,9 +84,9 @@ export class DateUtil {
    * @returns New array with objects having converted date fields
    */
   static transformArrayDateFields<T extends Record<string, any>>(
-    objects: T[], 
-    dateFields: (keyof T)[] = ['createdAt', 'updatedAt']
+    objects: T[],
+    dateFields: (keyof T)[] = ['createdAt', 'updatedAt'],
   ): T[] {
-    return objects.map(obj => this.transformDateFields(obj, dateFields));
+    return objects.map((obj) => this.transformDateFields(obj, dateFields));
   }
 }

@@ -35,9 +35,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (payload.loginTime && user.lastLogin) {
       const tokenLoginTime = new Date(payload.loginTime);
       const userLastLogin = new Date(user.lastLogin);
-      
+
       // Allow small time difference (1 second) to account for processing delays
-      const timeDifference = Math.abs(tokenLoginTime.getTime() - userLastLogin.getTime());
+      const timeDifference = Math.abs(
+        tokenLoginTime.getTime() - userLastLogin.getTime(),
+      );
       if (timeDifference > 1000) {
         throw new UnauthorizedException('Session expired - please login again');
       }

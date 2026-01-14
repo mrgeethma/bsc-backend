@@ -1,15 +1,13 @@
 import { IsString, IsNotEmpty, MinLength } from 'class-validator';
-import { Transform } from 'class-transformer';      
 
 export class ResetPasswordDto {
-    @IsNotEmpty()
-    @IsString()
-    @MinLength(6)
-    currentPassword: string;
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(6)
+  currentPassword: string;
 
-    @IsNotEmpty()
-    @IsString()
-    @MinLength(6)
-    newPassword: string;
-
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(6)
+  newPassword: string;
 }

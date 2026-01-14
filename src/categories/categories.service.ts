@@ -1,5 +1,9 @@
 //this. refers to the current instance of CategoriesService class.(meke thiyena kiyana adahasa)
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from '../entities';
@@ -12,20 +16,23 @@ export class CategoriesService {
     private categoriesRepository: Repository<Category>, // Repository for Category entity to perform database operations
   ) {} //categoriesRepository is a TypeORM repository connected to the Category entity and Used to query the database
 
-  private generateSlug(name: string): string { // Utility method to generate URL-friendly slugs from category names
+  private generateSlug(name: string): string {
+    // Utility method to generate URL-friendly slugs from category names
     return name // here we generate a slug by converting the name to lowercase, replacing spaces with hyphens, and removing special characters
-      .toLowerCase() 
+      .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '') // remove invalid characters(anything that's not a-z, 0-9, space, or hyphen. The slashes / / are just wrappers that tell JavaScript: “The thing inside is a regex, not a string.” and the g at the end means "global", so it replaces all occurrences, not just the first one)
       .replace(/\s+/g, '-') // replace spaces with hyphens(one or more spaces). \s means space and + means "one or more"
-      .replace(/-+/g, '-') // collapse multiple hyphens into a single hyphen 
+      .replace(/-+/g, '-') // collapse multiple hyphens into a single hyphen
       .trim(); // remove leading and trailing spaces
   }
 
-  async create(createCategoryDto: CreateCategoryDto): Promise<Category> { // Here Promise<Category> means...
+  async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
+    // Here Promise<Category> means...
     const slug = this.generateSlug(createCategoryDto.name); // Generate slug from category name. this.generateSlug is a method defined above and here this. refers to the current instance of CategoriesService class.
-    
+
     // Check if slug already exists.
-    const existingCategory = await this.categoriesRepository.findOne({ //existingCategory will be either a Category object if a matching record is found or null if no match is found. difference between findOne and find methods is that findOne returns a single entity or null, while find returns an array of entities.
+    const existingCategory = await this.categoriesRepository.findOne({
+      //existingCategory will be either a Category object if a matching record is found or null if no match is found. difference between findOne and find methods is that findOne returns a single entity or null, while find returns an array of entities.
       where: { slug }, // here where: { slug } is shorthand for where: { slug: slug }. Find a category where the slug column equals the generated slug
     });
 
@@ -33,7 +40,8 @@ export class CategoriesService {
       throw new ConflictException('Category with this name already exists');
     }
 
-    const category = this.categoriesRepository.create({ // Create and prepare a new Category entity object with the provided data. create method prepares a new entity instance but does not save it to the database yet.
+    const category = this.categoriesRepository.create({
+      // Create and prepare a new Category entity object with the provided data. create method prepares a new entity instance but does not save it to the database yet.
       ...createCategoryDto, // *****************Spread operator to copy properties from createCategoryDto and here ...createCategoryDto means "take all properties from createCategoryDto and add them to this new object"
       slug,
       sortOrder: createCategoryDto.sortOrder || 0, // Default sortOrder to 0 if not provided and when it set to 0, it means this category will appear first in the sorted list unless other categories also have a sortOrder of 0. if multiple categories share the same sortOrder, their relative order will be determined by the secondary sorting criteria, which is name in ascending order as defined in the findAll and findAllForAdmin methods below.
@@ -73,16 +81,22 @@ export class CategoriesService {
     return category;
   }
 
-  async update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
+  async update(
+    id: string,
+    updateCategoryDto: UpdateCategoryDto,
+  ): Promise<Category> {
     const category = await this.findOne(id);
 
-    if (updateCategoryDto.name && updateCategoryDto.name !== category.name) { // updateCategoryDto.name eken namak enawanam saha e namai id ekata adala object eke namai samana nttn kiyala metana kiyanne. what is updateCategoryDto.name !== category.name does is it checks if the name property in the updateCategoryDto is different from the current name of the category. This ensures that we only attempt to generate a new slug and check for conflicts if the name is actually being changed.
+    if (updateCategoryDto.name && updateCategoryDto.name !== category.name) {
+      // updateCategoryDto.name eken namak enawanam saha e namai id ekata adala object eke namai samana nttn kiyala metana kiyanne. what is updateCategoryDto.name !== category.name does is it checks if the name property in the updateCategoryDto is different from the current name of the category. This ensures that we only attempt to generate a new slug and check for conflicts if the name is actually being changed.
       const newSlug = this.generateSlug(updateCategoryDto.name); // Generate new slug based on the updated name
-      const existingCategory = await this.categoriesRepository.findOne({ // Check if the new slug already exists in another category
-        where: { slug: newSlug }, 
+      const existingCategory = await this.categoriesRepository.findOne({
+        // Check if the new slug already exists in another category
+        where: { slug: newSlug },
       });
 
-      if (existingCategory && existingCategory.id !== id) { // Check if the found category is different from the one being updated
+      if (existingCategory && existingCategory.id !== id) {
+        // Check if the found category is different from the one being updated
         throw new ConflictException('Category with this name already exists'); // Throw conflict error if another category with the new slug exists
       }
 
@@ -99,7 +113,8 @@ export class CategoriesService {
   //   await this.categoriesRepository.remove(category);
   // }
 
-  async softDelete(id: string): Promise<void> { // here Promise<void> indicates that this method does not return any value when it completes.
+  async softDelete(id: string): Promise<void> {
+    // here Promise<void> indicates that this method does not return any value when it completes.
     const category = await this.findOne(id);
     category.isActive = false;
     await this.categoriesRepository.save(category);
@@ -112,7 +127,6 @@ export class CategoriesService {
   }
 }
 
-
 // random business identifier/ serial number(that entity key should be unique) generate method example:
 
 // private generateCategoryCode(prefix = 'CAT'): string {
@@ -121,12 +135,11 @@ export class CategoriesService {
 //     .substring(2, 7)
 //     .toUpperCase(); // 5-char random code
 
-//   const now = new Date(); 
+//   const now = new Date();
 // or
 // const now = new Date(
 //   new Date().toLocaleString('en-US', { timeZone: 'Asia/Colombo' })
 // );
-
 
 //   const date = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
 //   const time = now.toTimeString().slice(0, 8).replace(/:/g, ''); // HHMMSS
